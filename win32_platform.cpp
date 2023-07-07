@@ -1,16 +1,19 @@
 #include <windows.h>
 #include "utils.cpp"
+#include "platform_common.cpp"
 
 global_variable bool isRunning = true;
 
-struct Render_State {
+struct RenderState {
     int width, height;
     void* memory;
     BITMAPINFO bitmap_info; 
 };
 
-global_variable Render_State render_state;
+global_variable RenderState render_state;
+global_variable Input input = {};
 #include "renderer.cpp"
+#include "game.cpp"
 
 LRESULT CALLBACK window_callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
     LRESULT result = 0;
@@ -47,6 +50,45 @@ LRESULT CALLBACK window_callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
     return result;
 }
 
+#define process_key(k, b)\
+case k: { \
+input.buttons[b].changed = is_down != input.buttons[b].isDown; \
+input.buttons[b].isDown = is_down; \
+} break;
+
+internal void handle_input(HWND window) {
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        input.buttons[i].changed = false;
+    }
+
+    MSG message;
+    while (PeekMessage(&message, window, 0, 0, PM_REMOVE)) {
+        switch (message.message) {
+        case WM_KEYUP:
+        case WM_KEYDOWN: {
+            u32 vk_code = (u32)message.wParam;
+            bool is_down = ((message.lParam & 1 << 31) == 0);
+
+            switch (vk_code) {
+                process_key(VK_UP, BUTTON_UP);
+                process_key(0x57, BUTTON_UP); // W
+                process_key(VK_DOWN, BUTTON_DOWN);
+                process_key(0x53, BUTTON_DOWN); // S
+                process_key(VK_LEFT, BUTTON_LEFT);
+                process_key(0x41, BUTTON_LEFT); // A
+                process_key(VK_RIGHT, BUTTON_RIGHT);
+                process_key(0x44, BUTTON_RIGHT); //D
+            }
+        } break;
+
+        default:
+            TranslateMessage(&message);
+            DispatchMessage(&message);
+        }
+    }
+}
+
+
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
     
     // Create Window Class
@@ -59,21 +101,20 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     RegisterClass(&window_class);
 
     //Create Window
-    HWND window = CreateWindow(window_class.lpszClassName, "My First Game", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, 0, 0, hInstance, 0);
+    HWND window = CreateWindow(window_class.lpszClassName, "My First Game", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 720, 720, 0, 0, hInstance, 0);
     HDC hdc = GetDC(window);
 
+    // Game Setup 
+    setup_game();
+
+    // Game Loop
     while (isRunning) {
         // Input
-        MSG message;
-        while (PeekMessage(&message, window, 0, 0, PM_REMOVE)) {
-            TranslateMessage(&message);
-            DispatchMessage(&message);
-        }
+        handle_input(window);
+        
 
         // Update
-        render_background(0x200f20);
-        draw_rect_in_pixels(50, 50, 200, 70, 0xFFFFDD);
-        draw_rect(0, 0, 5, 3, 0xFFAA00);
+        simulate_game(&input);
 
 
         // Render

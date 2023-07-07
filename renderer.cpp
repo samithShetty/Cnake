@@ -28,7 +28,7 @@ internal void draw_rect(float x, float y, float half_width, float half_height, u
     half_width *= render_state.width * render_scale;
     half_height *= render_state.width * render_scale;
     
-    x += render_state.width / 2.f;
-    y += render_state.height / 2.f;
-    draw_rect_in_pixels(x - half_width, y - half_width, half_width*2, half_height*2, color);
+    //x += render_state.width / 2.f;
+    //y += render_state.height / 2.f;
+    draw_rect_in_pixels(x - half_width, y - half_width, half_width, half_height, color);
 }
