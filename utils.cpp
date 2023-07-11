@@ -51,10 +51,10 @@ struct Queue {
     T pop() {
         // Check if has elements
         if (length == 0) {
-            throw();
+            throw;
         }
-        T val = arr[tail_index]
-            tail_index = (tail_index + 1) % arrSize;
+        T val = arr[tail_index];
+        tail_index = (tail_index + 1) % arrSize;
         length--;
         return val;
     }

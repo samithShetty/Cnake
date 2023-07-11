@@ -1,3 +1,4 @@
+#include <cstdlib>
 #define isDown(b) input->buttons[b].isDown
 #define isPressed(b) input->buttons[b].isDown && input->buttons[b].changed
 #define released(b) !input->buttons[b].isDown && input->buttons[b].changed
@@ -23,6 +24,10 @@ struct GridPos {
     GridPos get_left() { return GridPos(x - 1, y); }
     GridPos get_right() { return GridPos(x + 1, y); }
 
+    bool operator == (const GridPos& p) {
+        return x == p.x && y == p.y;
+    }
+
 };
 
 struct GridStyling {
@@ -42,40 +47,78 @@ struct GridStyling {
     }
 };
 
+struct Snake;
+
+struct GameGrid {
+    int width;
+    int height;
+    Snake* snake;
+    GridPos fruit;
+    GridStyling style;
+    GameGrid(int w, int h);
+    void placeFruit();
+    void render();
+};
+
 struct Snake {
+    GameGrid* grid;
     Queue<GridPos> snake;
-    Direction dir;
+    Direction dir = LEFT;
     
-    Snake(GridPos startPos) {
+    Snake(GameGrid* gg, GridPos startPos): grid(gg) {
         snake.push(startPos);
     }
-    void move(bool eat) {
-        
+
+    void move() {
+        GridPos newPos;
         switch (dir) {
             case UP: {
-                snake.push(snake.getHead().get_up());
+                newPos = snake.getHead().get_up();
                 break;
             }
             case DOWN: {
-                snake.push(snake.getHead().get_down());
+                newPos = snake.getHead().get_down();
                 break;
             }
             case LEFT: {
-                snake.push(snake.getHead().get_left());
+                newPos = snake.getHead().get_left();
                 break;
             }
             case RIGHT: {
-                snake.push(snake.getHead().get_right());
+                newPos = snake.getHead().get_right();
                 break;
             }
         }
-        checkCollide();
+        checkCollide(newPos);
+
+        snake.push(newPos);
+
+        // Check if player ate fruit this turn
+        if (checkEat(newPos)) {
+            grid->placeFruit();
+        }
+        else {
+            snake.pop(); 
+        }
     }
 
-    void changeDirection(Direction newDir) {
+    void setDirection(Direction newDir) {
         dir = newDir;
     }
-    void checkCollide() {}
+
+    bool checkCollide(GridPos pos) {
+        for (int i = 0; i < snake.length; i++) {
+            GridPos cell = snake.arr[snake.tail_index + i];
+            if (cell == pos) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool checkEat(GridPos pos) {
+        return pos == grid->fruit;
+    }
 
     void render(GridStyling style) {
         for (int i = 0; i < snake.length; i++) {
@@ -85,33 +128,28 @@ struct Snake {
     }
 };
 
-struct GameGrid {
-    int width;
-    int height;
-    Snake snake;
-    GridPos fruit;
-    GridStyling style;
+GameGrid::GameGrid(int w, int h) :width(w), height(h), style(50, 5, 0xFFFFE0) {
+    style.setOffset(w, h);
+    this->snake = new Snake(this, GridPos(w / 2, h / 2));
+    placeFruit();
+}
 
-    // Sizing / Appearance
-
-
-    GameGrid() = default;
-    GameGrid(int w, int h) :width(w), height(h), snake(GridPos(w/2,h/2)), style(50, 5, 0xFFFFE0) {
-        style.setOffset(w, h);
+void GameGrid::placeFruit() {
+    fruit.x = std::rand() % width;
+    fruit.y = std::rand() % height;
+    if (this->snake->checkCollide(fruit)) {
+        placeFruit();
     }
+}
     
-    void render() {
-        /*
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-            
-                draw_rect_in_pixels(j*cell_size + grid_offset_x, i *cell_size + grid_offset_y, cell_size - cell_spacing, cell_size - cell_spacing, );
-            }
-        }
-        */
-        snake.render(style);
-    }
-}; 
+void GameGrid::render() {
+    this->snake->render(style);
+    draw_rect_in_pixels(fruit.x * style.cell_size + style.grid_offset_x, 
+                        fruit.y * style.cell_size + style.grid_offset_y, 
+                        style.cell_size - style.cell_spacing, 
+                        style.cell_size - style.cell_spacing, 0xFFDD20);
+
+}
 
 GameGrid* grid;
 void setup_game() {
@@ -119,18 +157,27 @@ void setup_game() {
 }
 
 internal void simulate_game(Input* input) {
-    render_background(0x1A0f1F);
-    grid->render();
+    
     if (isDown(BUTTON_UP)) {
-        posy += 1;
+        grid->snake->setDirection(UP);
     }
     if (isDown(BUTTON_DOWN)) {
-        posy -= 1;
+        grid->snake->setDirection(DOWN);
     }
     if (isDown(BUTTON_LEFT)) {
-        posx -= 1;
+        grid->snake->setDirection(LEFT);
     }
     if (isDown(BUTTON_RIGHT)) {
-        posx += 1;
+        grid->snake->setDirection(RIGHT);
     }
+    grid->snake->move();
+
+
+}
+
+internal void render_game() {
+    render_background(0x1A0f1F);
+    //draw_rect_in_pixels()
+    grid->render();
+
 }

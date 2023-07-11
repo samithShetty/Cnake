@@ -3,6 +3,7 @@
 #include "platform_common.cpp"
 
 global_variable bool isRunning = true;
+global_variable float frame_time_ms = 1000 * 1.f/10; // Limit Framerate
 
 struct RenderState {
     int width, height;
@@ -88,7 +89,6 @@ internal void handle_input(HWND window) {
     }
 }
 
-
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
     
     // Create Window Class
@@ -104,6 +104,18 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     HWND window = CreateWindow(window_class.lpszClassName, "My First Game", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 720, 720, 0, 0, hInstance, 0);
     HDC hdc = GetDC(window);
 
+    LARGE_INTEGER frame_start_time;
+    LARGE_INTEGER frame_end_time;
+    QueryPerformanceCounter(&frame_start_time);
+
+    
+    float performance_frequency; // Grab CPU Frequency to track framerate
+    {
+        LARGE_INTEGER perf_freq;
+        QueryPerformanceFrequency(&perf_freq); 
+        performance_frequency = float(perf_freq.QuadPart);
+    }
+
     // Game Setup 
     setup_game();
 
@@ -118,7 +130,13 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 
         // Render
+        render_game();
         StretchDIBits(hdc, 0, 0, render_state.width, render_state.height, 0, 0, render_state.width, render_state.height, render_state.memory, &render_state.bitmap_info, DIB_RGB_COLORS, SRCCOPY);
-    
+        
+        // Sleep to limit framerate
+        QueryPerformanceCounter(&frame_end_time);
+        float deltaTime = ((float)(frame_end_time.QuadPart - frame_start_time.QuadPart) / performance_frequency);
+        frame_start_time = frame_end_time;
+        Sleep(frame_time_ms);
     }
 }
