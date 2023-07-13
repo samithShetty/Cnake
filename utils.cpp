@@ -33,7 +33,11 @@ struct Queue {
 
     void increaseCapacity() { // Allocate new array of double the size
         T* new_arr = (T*)malloc(arrSize * 2 * sizeof(T));
-        memcpy(new_arr, arr, sizeof(T) * arrSize);
+        // Shift array values to front and update head/tail indicies
+        memcpy(new_arr, arr + tail_index, sizeof(T) * (arrSize-tail_index));
+        memcpy(new_arr, arr, sizeof(T) * tail_index);
+        tail_index = 0;
+        head_index = arrSize - 1;
         free(arr);
         arr = new_arr;
         arrSize *= 2;

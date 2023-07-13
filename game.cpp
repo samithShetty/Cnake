@@ -1,4 +1,6 @@
 #include <cstdlib>
+#include <stdio.h>
+
 #define isDown(b) input->buttons[b].isDown
 #define isPressed(b) input->buttons[b].isDown && input->buttons[b].changed
 #define released(b) !input->buttons[b].isDown && input->buttons[b].changed
@@ -7,10 +9,10 @@ int posx = 0;
 int posy = 0;
 
 enum Direction {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT,
+    UP = 0,
+    LEFT = 1,
+    DOWN = 2,
+    RIGHT = 3,
 };
 
 struct GridPos {
@@ -89,9 +91,28 @@ struct Snake {
                 break;
             }
         }
-        checkCollide(newPos);
+
+        // If new position is out of bounds, wrap around grid
+        if (newPos.x < 0) {
+           newPos.x = grid -> width - 1;
+        }
+        else if (newPos.x >= grid->width) {
+            newPos.x = 0;
+        }
+
+        if (newPos.y < 0) {
+            newPos.y = grid->height - 1;
+        }
+        else if (newPos.y >= grid->height) {
+            newPos.y = 0;
+        }
+
+        if (checkCollide(newPos)) {
+            return;
+        }
 
         snake.push(newPos);
+        //std::cout << newPos.x << ", " << newPos.y << "\n";
 
         // Check if player ate fruit this turn
         if (checkEat(newPos)) {
@@ -103,7 +124,10 @@ struct Snake {
     }
 
     void setDirection(Direction newDir) {
-        dir = newDir;
+        // Prevent Snake from reversing direction into self
+        if ((newDir+dir) % 2) { 
+            dir = newDir;
+        }
     }
 
     bool checkCollide(GridPos pos) {
@@ -122,7 +146,7 @@ struct Snake {
 
     void render(GridStyling style) {
         for (int i = 0; i < snake.length; i++) {
-            GridPos cell = snake.arr[snake.tail_index+i];
+            GridPos cell = snake.arr[(snake.tail_index+i) % snake.arrSize];
             draw_rect_in_pixels(cell.x * style.cell_size + style.grid_offset_x, cell.y * style.cell_size + style.grid_offset_y, style.cell_size - style.cell_spacing, style.cell_size - style.cell_spacing, 0xFFFFE0);
         }
     }
