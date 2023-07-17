@@ -5,8 +5,11 @@
 #define isPressed(b) input->buttons[b].isDown && input->buttons[b].changed
 #define released(b) !input->buttons[b].isDown && input->buttons[b].changed
 
-int posx = 0;
-int posy = 0;
+enum GameState {
+    PLAYING = 0,
+    PAUSED = 1,
+    GAME_OVER = 2
+};
 
 enum Direction {
     UP = 0,
@@ -43,9 +46,9 @@ struct GridStyling {
         cell_spacing(sp),
         color(c) {}
 
-    void setOffset(int window_w, int window_h) {
-        grid_offset_x = (render_state.width - window_w * cell_size) / 2;
-        grid_offset_y = (render_state.height - window_h * cell_size) / 2;
+    void setOffset(int grid_w, int grid_h) {
+        grid_offset_x = (render_state.width - grid_w * cell_size) / 2;
+        grid_offset_y = (render_state.height - grid_h * cell_size) / 2;
     }
 };
 
@@ -167,6 +170,13 @@ void GameGrid::placeFruit() {
 }
     
 void GameGrid::render() {
+    // Draw Outline Around Grid
+    draw_rect_outline_in_pixels(style.grid_offset_x - style.cell_spacing,
+                                style.grid_offset_y - style.cell_spacing,
+                                (width-1) * style.cell_size + (width+1)*style.cell_spacing,
+                                (height-1) * style.cell_size + (height+1)*style.cell_spacing,
+                                1, 0xFFFFE0);
+
     this->snake->render(style);
     draw_rect_in_pixels(fruit.x * style.cell_size + style.grid_offset_x, 
                         fruit.y * style.cell_size + style.grid_offset_y, 
@@ -175,13 +185,13 @@ void GameGrid::render() {
 
 }
 
-GameGrid* grid;
+global_variable GameGrid* grid;
 void setup_game() {
     grid = new GameGrid(10, 10);
 }
 
 internal void simulate_game(Input* input) {
-    
+    switch
     if (isDown(BUTTON_UP)) {
         grid->snake->setDirection(UP);
     }

@@ -42,6 +42,10 @@ LRESULT CALLBACK window_callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
             render_state.bitmap_info.bmiHeader.biPlanes = 1;
             render_state.bitmap_info.bmiHeader.biBitCount = 32;
             render_state.bitmap_info.bmiHeader.biCompression = BI_RGB;
+
+            if (grid) {
+                grid->style.setOffset(grid->width, grid->height);
+            }
         }
 
         default:
