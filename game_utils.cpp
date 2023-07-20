@@ -54,6 +54,7 @@ struct GameGrid {
     GridPos fruit;
     GridStyling style;
     GameGrid(int w, int h);
+    ~GameGrid();
     void placeFruit();
     void render();
 };
@@ -152,6 +153,10 @@ GameGrid::GameGrid(int w, int h) :width(w), height(h), style(50, 5, 0xFFFFE0) {
     style.setOffset(w, h);
     this->snake = new Snake(this, GridPos(w / 2, h / 2));
     placeFruit();
+}
+
+GameGrid::~GameGrid() {
+    delete this->snake;
 }
 
 void GameGrid::placeFruit() {

@@ -14,19 +14,25 @@ void setup_game() {
     state = PLAYING;
 }
 
+void reset_game() {
+    delete grid;
+    visibility_timer = 1;
+    setup_game();
+}
+
 internal void simulate_game(Input* input) {
     switch (state) {
     case PLAYING: {
         if (isDown(BUTTON_UP)) {
             grid->snake->setDirection(UP);
         }
-        if (isDown(BUTTON_DOWN)) {
+        else if (isDown(BUTTON_DOWN)) {
             grid->snake->setDirection(DOWN);
         }
-        if (isDown(BUTTON_LEFT)) {
+        else if (isDown(BUTTON_LEFT)) {
             grid->snake->setDirection(LEFT);
         }
-        if (isDown(BUTTON_RIGHT)) {
+        else if (isDown(BUTTON_RIGHT)) {
             grid->snake->setDirection(RIGHT);
         }
         bool collided = grid->snake->move();
@@ -38,6 +44,9 @@ internal void simulate_game(Input* input) {
 
     case GAME_OVER: {
         visibility_timer++;
+        if (visibility_timer > 20) {
+            reset_game();
+        }
         break;
     }
     }
