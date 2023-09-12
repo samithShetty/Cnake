@@ -17,10 +17,10 @@ struct GridPos {
     GridPos() : x(0), y(0) {}
     GridPos(int _x, int _y) : x(_x), y(_y) {}
 
-    GridPos get_up() { return GridPos(x, y + 1); }
-    GridPos get_down() { return GridPos(x, y - 1); }
-    GridPos get_left() { return GridPos(x - 1, y); }
-    GridPos get_right() { return GridPos(x + 1, y); }
+    GridPos getUp() { return GridPos(x, y + 1); }
+    GridPos getDown() { return GridPos(x, y - 1); }
+    GridPos getLeft() { return GridPos(x - 1, y); }
+    GridPos getRight() { return GridPos(x + 1, y); }
 
     bool operator == (const GridPos& p) {
         return x == p.x && y == p.y;
@@ -29,19 +29,19 @@ struct GridPos {
 };
 
 struct GridStyling {
-    int cell_size = 50;
-    int cell_spacing = 5;
-    int grid_offset_x;
-    int grid_offset_y;
+    int cellSize = 50;
+    int cellSpacing = 5;
+    int gridOffsetX;
+    int gridOffsetY;
     int color = 0xFFFFFF;
     GridStyling(int size, int sp, int c) :
-        cell_size(size),
-        cell_spacing(sp),
+        cellSize(size),
+        cellSpacing(sp),
         color(c) {}
 
-    void setOffset(int grid_w, int grid_h) {
-        grid_offset_x = (render_state.width - grid_w * cell_size) / 2;
-        grid_offset_y = (render_state.height - grid_h * cell_size) / 2;
+    void setOffset(int gridWidth, int gridHeight) {
+        gridOffsetX = (renderState.width - gridWidth * cellSize) / 2;
+        gridOffsetY = (renderState.height - gridHeight * cellSize) / 2;
     }
 };
 
@@ -72,19 +72,19 @@ struct Snake {
         GridPos newPos;
         switch (dir) {
         case UP: {
-            newPos = snake.getHead().get_up();
+            newPos = snake.getHead().getUp();
             break;
         }
         case DOWN: {
-            newPos = snake.getHead().get_down();
+            newPos = snake.getHead().getDown();
             break;
         }
         case LEFT: {
-            newPos = snake.getHead().get_left();
+            newPos = snake.getHead().getLeft();
             break;
         }
         case RIGHT: {
-            newPos = snake.getHead().get_right();
+            newPos = snake.getHead().getRight();
             break;
         }
         }
@@ -129,7 +129,7 @@ struct Snake {
 
     bool checkCollide(GridPos pos) {
         for (int i = 0; i < snake.length; i++) {
-            GridPos cell = snake.arr[(snake.tail_index + i) % snake.arrSize];
+            GridPos cell = snake.arr[(snake.tailIndex + i) % snake.arrSize];
             if (cell == pos) {
                 return true;
             }
@@ -143,8 +143,8 @@ struct Snake {
 
     void render(GridStyling style) {
         for (int i = 0; i < snake.length; i++) {
-            GridPos cell = snake.arr[(snake.tail_index + i) % snake.arrSize];
-            draw_rect_in_pixels(cell.x * style.cell_size + style.grid_offset_x, cell.y * style.cell_size + style.grid_offset_y, style.cell_size - style.cell_spacing, style.cell_size - style.cell_spacing, 0xFFFFE0);
+            GridPos cell = snake.arr[(snake.tailIndex + i) % snake.arrSize];
+            drawRect(cell.x * style.cellSize + style.gridOffsetX, cell.y * style.cellSize + style.gridOffsetY, style.cellSize - style.cellSpacing, style.cellSize - style.cellSpacing, 0xFFFFE0);
         }
     }
 };
@@ -169,14 +169,15 @@ void GameGrid::placeFruit() {
 
 void GameGrid::render() {
     // Draw Outline Around Grid
-    draw_rect_outline_in_pixels(style.grid_offset_x - style.cell_spacing,
-        style.grid_offset_y - style.cell_spacing,
-        (width - 1) * style.cell_size + (width + 1) * style.cell_spacing,
-        (height - 1) * style.cell_size + (height + 1) * style.cell_spacing,
+    drawRectOutline(style.gridOffsetX - style.cellSpacing,
+        style.gridOffsetY - style.cellSpacing,
+        (width - 1) * style.cellSize + (width + 1) * style.cellSpacing,
+        (height - 1) * style.cellSize + (height + 1) * style.cellSpacing,
         1, 0xFFFFE0);
-
-    draw_rect_in_pixels(fruit.x * style.cell_size + style.grid_offset_x,
-        fruit.y * style.cell_size + style.grid_offset_y,
-        style.cell_size - style.cell_spacing,
-        style.cell_size - style.cell_spacing, 0xFFDD20);
+    
+    //Draw fruit
+    drawRect(fruit.x * style.cellSize + style.gridOffsetX,
+        fruit.y * style.cellSize + style.gridOffsetY,
+        style.cellSize - style.cellSpacing,
+        style.cellSize - style.cellSpacing, 0xFFDD20);
 }

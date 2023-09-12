@@ -20,11 +20,11 @@ template <typename T>
 struct Queue {
     T* arr;
     int arrSize = 10;
-    int head_index;
-    int tail_index;
+    int headIndex;
+    int tailIndex;
     unsigned int length;
 
-    Queue() : head_index(-1), tail_index(0),length(0) {
+    Queue() : headIndex(-1), tailIndex(0),length(0) {
         arr = (T*)malloc(arrSize * sizeof(T));
     }
     Queue(int s) : arrSize(s) {
@@ -34,10 +34,10 @@ struct Queue {
     void increaseCapacity() { // Allocate new array of double the size
         T* new_arr = (T*)malloc(arrSize * 2 * sizeof(T));
         // Shift array values to front and update head/tail indicies
-        memcpy(new_arr, arr + tail_index, sizeof(T) * (arrSize-tail_index));
-        memcpy(new_arr + arrSize - tail_index, arr, sizeof(T) * tail_index);
-        tail_index = 0;
-        head_index = arrSize - 1;
+        memcpy(new_arr, arr + tailIndex, sizeof(T) * (arrSize-tailIndex));
+        memcpy(new_arr + arrSize - tailIndex, arr, sizeof(T) * tailIndex);
+        tailIndex = 0;
+        headIndex = arrSize - 1;
         free(arr);
         arr = new_arr;
         arrSize *= 2;
@@ -47,8 +47,8 @@ struct Queue {
         if (length == arrSize) {
             increaseCapacity();
         }
-        head_index = (head_index + 1) % arrSize;
-        arr[head_index] = val;
+        headIndex = (headIndex + 1) % arrSize;
+        arr[headIndex] = val;
         length++;
     }
 
@@ -57,14 +57,14 @@ struct Queue {
         if (length == 0) {
             throw;
         }
-        T val = arr[tail_index];
-        tail_index = (tail_index + 1) % arrSize;
+        T val = arr[tailIndex];
+        tailIndex = (tailIndex + 1) % arrSize;
         length--;
         return val;
     }
 
     T getHead() {
-        return arr[head_index];
+        return arr[headIndex];
     }
 
 };

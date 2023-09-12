@@ -3,20 +3,20 @@
 #include "platform_common.cpp"
 
 global_variable bool isRunning = true;
-global_variable float frame_time_ms = 1000 * 1.f/10; // Limit Framerate
+global_variable float FrameTimeMillis = 1000 * 1.f/10; // Limit Framerate to 10 FPS
 
 struct RenderState {
     int width, height;
     void* memory;
-    BITMAPINFO bitmap_info; 
+    BITMAPINFO bitmapInfo; 
 };
 
-global_variable RenderState render_state;
+global_variable RenderState renderState;
 global_variable Input input = {};
 #include "renderer.cpp"
 #include "game.cpp"
 
-LRESULT CALLBACK window_callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK windowCallback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
     LRESULT result = 0;
 
     switch (Msg) {
@@ -30,18 +30,18 @@ LRESULT CALLBACK window_callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
         case WM_SIZE: {
             RECT rect;
             GetClientRect(hWnd, &rect);
-            render_state.width = rect.right - rect.left;
-            render_state.height = rect.bottom - rect.top;
-            int size = render_state.width * render_state.height * sizeof(unsigned int);
+            renderState.width = rect.right - rect.left;
+            renderState.height = rect.bottom - rect.top;
+            int size = renderState.width * renderState.height * sizeof(unsigned int);
 
-            if (render_state.memory) VirtualFree(render_state.memory, 0, MEM_RELEASE);
-            render_state.memory = VirtualAlloc(0, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-            render_state.bitmap_info.bmiHeader.biSize = sizeof(render_state.bitmap_info.bmiHeader);
-            render_state.bitmap_info.bmiHeader.biWidth = render_state.width;
-            render_state.bitmap_info.bmiHeader.biHeight = render_state.height;
-            render_state.bitmap_info.bmiHeader.biPlanes = 1;
-            render_state.bitmap_info.bmiHeader.biBitCount = 32;
-            render_state.bitmap_info.bmiHeader.biCompression = BI_RGB;
+            if (renderState.memory) VirtualFree(renderState.memory, 0, MEM_RELEASE);
+            renderState.memory = VirtualAlloc(0, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+            renderState.bitmapInfo.bmiHeader.biSize = sizeof(renderState.bitmapInfo.bmiHeader);
+            renderState.bitmapInfo.bmiHeader.biWidth = renderState.width;
+            renderState.bitmapInfo.bmiHeader.biHeight = renderState.height;
+            renderState.bitmapInfo.bmiHeader.biPlanes = 1;
+            renderState.bitmapInfo.bmiHeader.biBitCount = 32;
+            renderState.bitmapInfo.bmiHeader.biCompression = BI_RGB;
 
             if (grid) {
                 grid->style.setOffset(grid->width, grid->height);
@@ -55,13 +55,13 @@ LRESULT CALLBACK window_callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
     return result;
 }
 
-#define process_key(k, b)\
+#define processKey(k, b)\
 case k: { \
-input.buttons[b].changed = is_down != input.buttons[b].isDown; \
-input.buttons[b].isDown = is_down; \
+input.buttons[b].changed = isDown != input.buttons[b].isDown; \
+input.buttons[b].isDown = isDown; \
 } break;
 
-internal void handle_input(HWND window) {
+internal void handleInput(HWND window) {
     for (int i = 0; i < BUTTON_COUNT; i++) {
         input.buttons[i].changed = false;
     }
@@ -71,18 +71,18 @@ internal void handle_input(HWND window) {
         switch (message.message) {
         case WM_KEYUP:
         case WM_KEYDOWN: {
-            u32 vk_code = (u32)message.wParam;
-            bool is_down = ((message.lParam & 1 << 31) == 0);
+            u32 vkCode = (u32)message.wParam;
+            bool isDown = ((message.lParam & 1 << 31) == 0);
 
-            switch (vk_code) {
-                process_key(VK_UP, BUTTON_UP);
-                process_key(0x57, BUTTON_UP); // W
-                process_key(VK_DOWN, BUTTON_DOWN);
-                process_key(0x53, BUTTON_DOWN); // S
-                process_key(VK_LEFT, BUTTON_LEFT);
-                process_key(0x41, BUTTON_LEFT); // A
-                process_key(VK_RIGHT, BUTTON_RIGHT);
-                process_key(0x44, BUTTON_RIGHT); //D
+            switch (vkCode) {
+                processKey(VK_UP, BUTTON_UP);
+                processKey(0x57, BUTTON_UP); // W
+                processKey(VK_DOWN, BUTTON_DOWN);
+                processKey(0x53, BUTTON_DOWN); // S
+                processKey(VK_LEFT, BUTTON_LEFT);
+                processKey(0x41, BUTTON_LEFT); // A
+                processKey(VK_RIGHT, BUTTON_RIGHT);
+                processKey(0x44, BUTTON_RIGHT); //D
             }
         } break;
 
@@ -96,51 +96,44 @@ internal void handle_input(HWND window) {
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
     
     // Create Window Class
-    WNDCLASS window_class = {};
-    window_class.style = CS_HREDRAW | CS_VREDRAW;
-    window_class.lpszClassName = "Game Window Class";
-    window_class.lpfnWndProc = window_callback;
+    WNDCLASS WindowClass = {};
+    WindowClass.style = CS_HREDRAW | CS_VREDRAW;
+    WindowClass.lpszClassName = "Game Window Class";
+    WindowClass.lpfnWndProc = windowCallback;
 
     // Register Class
-    RegisterClass(&window_class);
+    RegisterClass(&WindowClass);
 
     //Create Window
-    HWND window = CreateWindow(window_class.lpszClassName, "My First Game", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 720, 720, 0, 0, hInstance, 0);
+    HWND window = CreateWindow(WindowClass.lpszClassName, "Cnake", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 720, 720, 0, 0, hInstance, 0);
     HDC hdc = GetDC(window);
 
-    LARGE_INTEGER frame_start_time;
-    LARGE_INTEGER frame_end_time;
-    QueryPerformanceCounter(&frame_start_time);
+    LARGE_INTEGER frameStartTime;
+    LARGE_INTEGER frameEndTime;
+    QueryPerformanceCounter(&frameStartTime);
 
-    
-    float performance_frequency; // Grab CPU Frequency to track framerate
-    {
-        LARGE_INTEGER perf_freq;
-        QueryPerformanceFrequency(&perf_freq); 
-        performance_frequency = float(perf_freq.QuadPart);
-    }
+    // Grab CPU Frequency to track framerate
+    float performanceFrequency; 
+    LARGE_INTEGER _perfFreq;
+    QueryPerformanceFrequency(&_perfFreq); 
+    performanceFrequency = float(_perfFreq.QuadPart);
 
     // Game Setup 
-    setup_game();
+    setupGame();
 
     // Game Loop
     while (isRunning) {
-        // Input
-        handle_input(window);
-        
+        handleInput(window);
 
-        // Update
-        simulate_game(&input);
+        simulateGame(&input);
 
-
-        // Render
-        render_game();
-        StretchDIBits(hdc, 0, 0, render_state.width, render_state.height, 0, 0, render_state.width, render_state.height, render_state.memory, &render_state.bitmap_info, DIB_RGB_COLORS, SRCCOPY);
+        renderGame();
+        StretchDIBits(hdc, 0, 0, renderState.width, renderState.height, 0, 0, renderState.width, renderState.height, renderState.memory, &renderState.bitmapInfo, DIB_RGB_COLORS, SRCCOPY);
         
         // Sleep to limit framerate
-        QueryPerformanceCounter(&frame_end_time);
-        float deltaTime = ((float)(frame_end_time.QuadPart - frame_start_time.QuadPart) / performance_frequency);
-        frame_start_time = frame_end_time;
-        Sleep(frame_time_ms);
+        QueryPerformanceCounter(&frameEndTime);
+        float deltaTime = ((float)(frameEndTime.QuadPart - frameStartTime.QuadPart) / performanceFrequency);
+        frameStartTime = frameEndTime;
+        Sleep(FrameTimeMillis-deltaTime);
     }
 }
